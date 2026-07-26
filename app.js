@@ -403,9 +403,16 @@ async function runZImage() {
   const [w, h] = Z_RESOLUTIONS[$("zRes").value];
   const size = `${w}x${h}`;
 
-  setStatus("z-image 生成中... / Generating...");
- const model = $("modelSel").value;
-const payload = { prompt, model, n, size };
+  const model = $("modelSel").value;
+
+  let steps = 9;
+  let guidance = 0.0;
+  if (model === "FLUX.1-dev") { steps = 50; guidance = 7.0; }
+  else if (model === "FLUX.1-schnell") { steps = 4; guidance = 0.0; }
+  else if (model === "FLUX.2-dev") { steps = 28; guidance = 7.0; }
+
+  setStatus("生成中... / Generating...");
+  const payload = { prompt, model, n, size, num_inference_steps: steps, guidance_scale: guidance };
 
   const res = await apiFetch("images/generations", {
     method: "POST",
@@ -418,18 +425,49 @@ const payload = { prompt, model, n, size };
 
   const j = await readJsonSafely(res);
   if (!res.ok) {
-    setStatus("z-image 失败 / Failed", "err");
-    addOutputItem({ title: "z-image 生成失败 / Failed", rawJson: j, meta: `HTTP ${res.status}` });
+    setStatus("生成失败 / Failed", "err");
+    addOutputItem({ title: "生成失败 / Failed", rawJson: j, meta: `HTTP ${res.status}` });
     throw new Error(`API 错误 / API Error (${res.status})`);
   }
 
-  // Expect OpenAI-like: { data: [ { url | b64_json } ] }
   const data = Array.isArray(j.data) ? j.data : [];
   if (!data.length) {
-    addOutputItem({ title: "z-image 返回无数据 / Empty response", rawJson: j });
-    setStatus("z-image 失败 / Failed", "err");
+    addOutputItem({ title: "返回无数据 / Empty response", rawJson: j });
+    setStatus("生成失败 / Failed", "err");
     return;
   }
+
+  for (let i = 0; i < data.length; i++) {
+    const item = data[i] || {};
+    let blobInfo = null;
+
+    if (item.url) {
+      blobInfo = await fetchAsBlob(item.url, "image");
+    } else if (item.b64_json) {
+      const byteChars = atob(item.b64_json);
+      const bytes = new Uint8Array(byteChars.length);
+      for (let k = 0; k < byteChars.length; k++) bytes[k] = byteChars.charCodeAt(k);
+      const blob = new Blob([bytes], { type: "image/png" });
+      blobInfo = { blob, objUrl: URL.createObjectURL(blob) };
+    } else {
+      addOutputItem({ title: `第${i+1}张无数据 / No image data`, rawJson: item });
+      continue;
+    }
+
+    const img = document.createElement("img");
+    img.src = blobInfo.objUrl;
+
+    const filename = `image-${nowTs()}-${i+1}.png`;
+    addOutputItem({
+      title: `输出 #${i+1}`,
+      meta: `size=${size}, n=${n}, model=${model}, steps=${steps}, guidance=${guidance}`,
+      element: img,
+      download: { href: blobInfo.objUrl, filename },
+    });
+  }
+
+  setStatus("成功 / Success", "ok");
+}
 
   for (let i = 0; i < data.length; i++) {
     const item = data[i] || {};
