@@ -404,7 +404,8 @@ async function runZImage() {
   const size = `${w}x${h}`;
 
   setStatus("z-image 生成中... / Generating...");
-  const payload = { prompt, model: "z-image-turbo", n, size };
+ const model = $("modelSel").value;
+const payload = { prompt, model, n, size };
 
   const res = await apiFetch("images/generations", {
     method: "POST",
