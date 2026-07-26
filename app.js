@@ -253,4 +253,207 @@ async function generateWithModel(modelKey, prompt, width, height, n = 1, steps =
 
         // 轮询结果
         let result = null;
-        for (let i = 0; i < 90; i++)
+        for (let i = 0; i < 90; i++) {
+            await sleep(3000);
+            const pollRes = await fetch(`${API_BASE}/v1/tasks/${taskId}`, {
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'X-ModelScope-Task-Type': 'image_generation'
+                }
+            });
+
+            if (pollRes.ok) {
+                const pollData = await pollRes.json();
+                if (pollData.task_status === 'SUCCEED') {
+                    result = pollData;
+                    break;
+                } else if (pollData.task_status === 'FAILED') {
+                    throw new Error(pollData.message || '生成失败');
+                }
+            }
+        }
+
+        if (!result) {
+            throw new Error('生成超时，请重试');
+        }
+
+        handleResult(result);
+        setStatus('就绪', '#22c55e');
+
+    } catch (e) {
+        console.error('生成错误:', e);
+        if (outputArea) {
+            outputArea.innerHTML = `<div class="error">❌ ${e.message}</div>`;
+        }
+        setStatus('错误', '#ef4444');
+    }
+}
+
+// ========== 处理结果 ==========
+function handleResult(data) {
+    const images = data.output_images || data.images || [];
+    if (images.length === 0) {
+        outputArea.innerHTML = `<pre style="background:#f0f0f0;padding:12px;border-radius:8px;overflow:auto;max-height:400px;">${JSON.stringify(data, null, 2)}</pre>`;
+        setStatus('⚠️ 未知响应格式', '#f59e0b');
+        return;
+    }
+
+    let html = `<div class="result-grid ${images.length > 1 ? 'cols-2' : 'cols-1'}">`;
+    images.forEach((img, idx) => {
+        const imgSrc = img.startsWith('data:') ? img : img;
+        html += `
+            <div class="result-item">
+                <img src="${imgSrc}" alt="生成图片 ${idx+1}" onclick="openModal('${imgSrc}')" loading="lazy">
+                <div class="item-actions">
+                    <button onclick="downloadImage('${imgSrc}', ${idx+1})">📥 下载</button>
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+
+    outputArea.innerHTML = html;
+    setStatus(`✅ 生成成功！共 ${images.length} 张`, '#22c55e');
+}
+
+// ========== 辅助函数 ==========
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function setStatus(text, color = '#3b82f6') {
+    if (statusMsg) {
+        statusMsg.textContent = text;
+        statusMsg.style.color = color;
+    }
+}
+
+// ========== 下载 ==========
+window.downloadImage = function(dataUrl, index) {
+    const link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = `image_${Date.now()}_${index}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
+// ========== 图片预览 ==========
+window.openModal = function(src) {
+    const modal = document.getElementById('imageModal');
+    const modalImg = document.getElementById('modalImage');
+    if (!modal || !modalImg) return;
+    modalImg.src = src;
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+};
+
+document.getElementById('modalClose')?.addEventListener('click', function() {
+    document.getElementById('imageModal').style.display = 'none';
+    document.body.style.overflow = '';
+});
+document.getElementById('imageModal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        this.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+});
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const modal = document.getElementById('imageModal');
+        if (modal && modal.style.display === 'flex') {
+            modal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+    }
+});
+
+// ========== 绑定各模型生成事件 ==========
+
+// z-image
+if (btnZRun) {
+    btnZRun.addEventListener('click', function() {
+        const prompt = zPrompt?.value || '';
+        const res = zRes?.value || '1024x1024';
+        const [width, height] = res.split('x').map(Number);
+        const n = parseInt(zN?.value) || 1;
+        generateWithModel('z-image', prompt, width, height, n, 9, 0.0);
+    });
+}
+
+// FLUX.1-dev
+if (btnFluxDevRun) {
+    btnFluxDevRun.addEventListener('click', function() {
+        const prompt = fluxDevPrompt?.value || '';
+        const res = fluxDevRes?.value || '1024x1024';
+        const [width, height] = res.split('x').map(Number);
+        const n = parseInt(fluxDevN?.value) || 1;
+        generateWithModel('FLUX.1-dev', prompt, width, height, n, 50, 7.0);
+    });
+}
+
+// FLUX.1-schnell
+if (btnFluxSchnellRun) {
+    btnFluxSchnellRun.addEventListener('click', function() {
+        const prompt = fluxSchnellPrompt?.value || '';
+        const res = fluxSchnellRes?.value || '1024x1024';
+        const [width, height] = res.split('x').map(Number);
+        const n = parseInt(fluxSchnellN?.value) || 1;
+        generateWithModel('FLUX.1-schnell', prompt, width, height, n, 4, 0.0);
+    });
+}
+
+// FLUX.2-dev
+if (btnFlux2DevRun) {
+    btnFlux2DevRun.addEventListener('click', function() {
+        const prompt = flux2DevPrompt?.value || '';
+        const res = flux2DevRes?.value || '1024x1024';
+        const [width, height] = res.split('x').map(Number);
+        const n = parseInt(flux2DevN?.value) || 1;
+        generateWithModel('FLUX.2-dev', prompt, width, height, n, 28, 7.0);
+    });
+}
+
+// Edit-2511 (简化版)
+if (btnEditRun) {
+    btnEditRun.addEventListener('click', function() {
+        const prompt = editPrompt?.value || '';
+        const steps = parseInt(editSteps?.value) || 30;
+        const guidance = parseFloat(editGuidance?.value) || 7.5;
+        // 简化：只使用文本提示，实际需要处理图片上传
+        generateWithModel('Edit-2511', prompt, 512, 512, 1, steps, guidance);
+    });
+}
+
+// Wan2.2 (简化版)
+if (btnWanRun) {
+    btnWanRun.addEventListener('click', function() {
+        const prompt = wanPrompt?.value || '';
+        const steps = parseInt(wanSteps?.value) || 30;
+        const guidance = parseFloat(wanGuidance?.value) || 5;
+        // 简化：视频生成需要额外参数
+        generateWithModel('Wan2.2-I2V-A14B', prompt, 832, 480, 1, steps, guidance);
+    });
+}
+
+// HunyuanVideo (简化版)
+if (btnHyRun) {
+    btnHyRun.addEventListener('click', function() {
+        const prompt = hyPrompt?.value || '';
+        const steps = parseInt(hySteps?.value) || 10;
+        const guidance = 7.0;
+        generateWithModel('HunyuanVideo-1.5', prompt, 1024, 576, 1, steps, guidance);
+    });
+}
+
+// ========== 保存 API Key ==========
+document.addEventListener('DOMContentLoaded', function() {
+    const keyInput = document.getElementById('apiKey');
+    if (keyInput) {
+        const saved = localStorage.getItem('gitee_api_key');
+        if (saved) keyInput.value = saved;
+        keyInput.addEventListener('change', function() {
+            localStorage.setItem('gitee_api_key', this.value.trim());
+        });
+    }
+});
+
+console.log('✅ 多模型工具已加载，包含 FLUX 模型支持');
