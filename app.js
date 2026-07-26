@@ -20,9 +20,9 @@ const timeCost = document.getElementById('timeCost');
 // ========== 模型配置 ==========
 const MODEL_CONFIGS = {
     'z-image': { defaultSteps: 9, guidanceScale: 0.0 },
-    'flux-dev': { defaultSteps: 50, guidanceScale: 7.0 },
-    'flux-schnell': { defaultSteps: 4, guidanceScale: 0.0 },
-    'flux-2-dev': { defaultSteps: 28, guidanceScale: 7.0 },
+    'FLUX.1-dev': { defaultSteps: 50, guidanceScale: 7.0 },
+    'FLUX.1-schnell': { defaultSteps: 4, guidanceScale: 0.0 },
+    'FLUX.2-dev': { defaultSteps: 28, guidanceScale: 7.0 },
     'edit-2511': { defaultSteps: 30, guidanceScale: 7.5 },
     'wan-video': { defaultSteps: 20, guidanceScale: 7.0 }
 };
@@ -38,6 +38,7 @@ function onModelChange() {
     if (guidanceInput && config.guidanceScale !== undefined) {
         guidanceInput.value = config.guidanceScale;
     }
+    // 显示/隐藏宽高参数
     const isVideo = key === 'wan-video';
     const isEdit = key === 'edit-2511';
     const widthGroup = document.getElementById('widthGroup');
@@ -54,6 +55,7 @@ function onModelChange() {
 modelSelect.addEventListener('change', onModelChange);
 onModelChange();
 
+// ========== 状态提示 ==========
 function setStatus(text, color = '#3b82f6') {
     if (statusMsg) {
         statusMsg.textContent = text;
@@ -61,6 +63,7 @@ function setStatus(text, color = '#3b82f6') {
     }
 }
 
+// ========== 进度条 ==========
 function updateProgress(percent, text) {
     if (!progressContainer) return;
     progressContainer.style.display = 'block';
@@ -73,6 +76,7 @@ function hideProgress() {
     if (progressBar) progressBar.style.width = '0%';
 }
 
+// ========== 核心生成函数 ==========
 async function generateImage() {
     const apiKey = document.getElementById('apiKey')?.value?.trim();
     if (!apiKey) {
@@ -113,7 +117,7 @@ async function generateImage() {
             guidance_scale: guidance,
         };
 
-        if (modelKey.startsWith('flux-')) {
+        if (modelKey.startsWith('FLUX.')) {
             payload.output_format = 'png';
         }
 
@@ -199,6 +203,7 @@ async function generateImage() {
     }
 }
 
+// ========== 处理结果 ==========
 function handleResult(data) {
     const images = data.output_images || data.images || [];
     if (images.length === 0) {
@@ -230,8 +235,10 @@ function handleResult(data) {
     setTimeout(hideProgress, 2000);
 }
 
+// ========== 辅助函数 ==========
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+// ========== 下载 ==========
 window.downloadImage = function(dataUrl, index) {
     const link = document.createElement('a');
     link.href = dataUrl;
@@ -241,6 +248,7 @@ window.downloadImage = function(dataUrl, index) {
     document.body.removeChild(link);
 };
 
+// ========== 图片预览 ==========
 window.openModal = function(src) {
     const modal = document.getElementById('imageModal');
     const modalImg = document.getElementById('modalImage');
@@ -270,6 +278,7 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
+// ========== 键盘快捷键 ==========
 promptInput?.addEventListener('keydown', function(e) {
     if (e.ctrlKey && e.key === 'Enter') {
         e.preventDefault();
@@ -277,8 +286,10 @@ promptInput?.addEventListener('keydown', function(e) {
     }
 });
 
+// ========== 绑定生成事件 ==========
 generateBtn?.addEventListener('click', generateImage);
 
+// ========== 保存 API Key ==========
 document.addEventListener('DOMContentLoaded', function() {
     const keyInput = document.getElementById('apiKey');
     if (keyInput) {
