@@ -17,12 +17,12 @@ const progressText = document.getElementById('progressText');
 const statusMsg = document.getElementById('statusMsg');
 const timeCost = document.getElementById('timeCost');
 
-// ========== 模型配置（只用于参数切换） ==========
+// ========== 模型配置 ==========
 const MODEL_CONFIGS = {
     'z-image': { defaultSteps: 9, guidanceScale: 0.0 },
-    'flux-dev': { defaultSteps: 50, guidanceScale: 7.0 },
-    'flux-schnell': { defaultSteps: 4, guidanceScale: 0.0 },
-    'flux-2-dev': { defaultSteps: 28, guidanceScale: 7.0 },
+    'flux-dev': { defaultSteps: 50, guidanceScale: 7.0 },      // 👈 新增
+    'flux-schnell': { defaultSteps: 4, guidanceScale: 0.0 },   // 👈 新增
+    'flux-2-dev': { defaultSteps: 28, guidanceScale: 7.0 },    // 👈 新增
     'edit-2511': { defaultSteps: 30, guidanceScale: 7.5 },
     'wan-video': { defaultSteps: 20, guidanceScale: 7.0 }
 };
@@ -97,7 +97,6 @@ async function generateImage() {
         return;
     }
 
-    // 禁用按钮
     generateBtn.disabled = true;
     generateBtn.textContent = '⏳ 生成中...';
     setStatus('正在生成...', '#f59e0b');
@@ -110,7 +109,6 @@ async function generateImage() {
     const startTime = Date.now();
 
     try {
-        // 构建请求体
         const payload = {
             model: modelKey,
             prompt: prompt,
@@ -125,7 +123,6 @@ async function generateImage() {
             payload.output_format = 'png';
         }
 
-        // 提交任务
         updateProgress(10, '提交任务...');
         const submitRes = await fetch(`${API_BASE}/v1/images/generations`, {
             method: 'POST',
@@ -161,7 +158,6 @@ async function generateImage() {
         setStatus(`处理中...`, '#f59e0b');
         updateProgress(20, `任务 ${taskId} 已提交`);
 
-        // 轮询结果
         let result = null;
         for (let i = 0; i < 90; i++) {
             await sleep(3000);
@@ -264,7 +260,6 @@ window.openModal = function(src) {
     document.body.style.overflow = 'hidden';
 };
 
-// 关闭模态框
 document.getElementById('modalClose')?.addEventListener('click', function() {
     document.getElementById('imageModal').style.display = 'none';
     document.body.style.overflow = '';
@@ -296,7 +291,7 @@ promptInput?.addEventListener('keydown', function(e) {
 // ========== 绑定生成事件 ==========
 generateBtn?.addEventListener('click', generateImage);
 
-// ========== 保存 API Key 到本地 ==========
+// ========== 保存 API Key ==========
 document.addEventListener('DOMContentLoaded', function() {
     const keyInput = document.getElementById('apiKey');
     if (keyInput) {
@@ -309,4 +304,3 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 console.log('✅ 多模型工具已加载');
-console.log('📌 可用模型:', Object.keys(MODEL_CONFIGS).join(', '));
