@@ -469,37 +469,6 @@ async function runZImage() {
   setStatus("成功 / Success", "ok");
 }
 
-  for (let i = 0; i < data.length; i++) {
-    const item = data[i] || {};
-    let blobInfo = null;
-
-    if (item.url) {
-      blobInfo = await fetchAsBlob(item.url, "image");
-    } else if (item.b64_json) {
-      const byteChars = atob(item.b64_json);
-      const bytes = new Uint8Array(byteChars.length);
-      for (let k = 0; k < byteChars.length; k++) bytes[k] = byteChars.charCodeAt(k);
-      const blob = new Blob([bytes], { type: "image/png" });
-      blobInfo = { blob, objUrl: URL.createObjectURL(blob) };
-    } else {
-      addOutputItem({ title: `z-image 第${i+1}张无数据 / No image data`, rawJson: item });
-      continue;
-    }
-
-    const img = document.createElement("img");
-    img.src = blobInfo.objUrl;
-
-    const filename = `z-image-${nowTs()}-${i+1}.png`;
-    addOutputItem({
-      title: `z-image 输出 #${i+1}`,
-      meta: `size=${size}, n=${n}`,
-      element: img,
-      download: { href: blobInfo.objUrl, filename },
-    });
-  }
-
-  setStatus("z-image 成功 / Success", "ok");
-}
 
 // -------- Edit-2511 --------
 async function runEdit() {
