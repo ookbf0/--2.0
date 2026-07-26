@@ -411,8 +411,14 @@ async function runZImage() {
   else if (model === "FLUX.1-schnell") { steps = 4; guidance = 0.0; }
   else if (model === "FLUX.2-dev") { steps = 28; guidance = 7.0; }
 
-  setStatus("生成中... / Generating...");
-  const payload = { prompt, model, n, size, num_inference_steps: steps, guidance_scale: guidance };
+ setStatus("生成中... / Generating...");
+let payload = { prompt, model, n, size };
+// 只有 FLUX 模型才加 steps 和 guidance
+if (model === "FLUX.1-dev" || model === "FLUX.1-schnell" || model === "FLUX.2-dev") {
+  payload.num_inference_steps = steps;
+  payload.guidance_scale = guidance;
+}
+📝 改完后的完整 runZImage
 
   const res = await apiFetch("images/generations", {
     method: "POST",
