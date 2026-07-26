@@ -418,7 +418,6 @@ if (model === "FLUX.1-dev" || model === "FLUX.1-schnell" || model === "FLUX.2-de
   payload.num_inference_steps = steps;
   payload.guidance_scale = guidance;
 }
-📝 改完后的完整 runZImage
 
   const res = await apiFetch("images/generations", {
     method: "POST",
