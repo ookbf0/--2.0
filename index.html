@@ -8,14 +8,16 @@
 </head>
 <body>
     <div class="container">
-        <h1>🖼️ Image View</h1>
+        <h1>🖼️ Image View 多模型工具</h1>
         <p style="color: #6b7280; margin-bottom: 20px;">纯 HTML + JS 网页版 · 支持文生图 / 图像编辑 / 图生视频</p>
 
+        <!-- API Key -->
         <div class="input-group">
             <label>🔑 API Key</label>
             <input type="password" id="apiKey" placeholder="输入你的 API Key">
         </div>
 
+        <!-- 模型选择 -->
         <div class="input-group">
             <label>🤖 选择模型</label>
             <select id="modelSelect">
@@ -28,11 +30,13 @@
             </select>
         </div>
 
+        <!-- 提示词 -->
         <div class="input-group" id="promptGroup">
             <label>📝 提示词 <span style="font-weight:400;color:#9ca3af;font-size:12px;">(Ctrl+Enter 生成)</span></label>
             <textarea id="prompt" rows="3" placeholder="描述你想要的画面..."></textarea>
         </div>
 
+        <!-- 参数行 -->
         <div class="params-row" id="paramsRow">
             <div class="param-group" id="widthGroup">
                 <label>宽度</label>
@@ -52,18 +56,22 @@
             </div>
         </div>
 
+        <!-- 生成按钮 -->
         <button id="generateBtn">🚀 生成图片/视频</button>
 
+        <!-- 状态栏 -->
         <div class="info-row">
             <span id="statusMsg">就绪</span>
             <span id="timeCost">⏱️ 上次耗时: --</span>
         </div>
 
+        <!-- 进度条 -->
         <div class="progress-container" id="progressContainer" style="display:none;">
             <div class="progress-bar" id="progressBar"></div>
             <span class="progress-text" id="progressText">0%</span>
         </div>
 
+        <!-- 输出区域 -->
         <div id="outputArea" style="margin-top: 16px; display:none;"></div>
     </div>
 
