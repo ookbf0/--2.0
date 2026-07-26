@@ -72,10 +72,12 @@ const progressBar = document.getElementById('progressBar');
 const progressText = document.getElementById('progressText');
 const statusMsg = document.getElementById('statusMsg');
 
-// ========== 初始化模型下拉菜单 ==========
+// ========== 初始化模型下拉菜单（强制重建） ==========
 function initModelSelect() {
     if (!modelSelect) return;
+    // 清空所有现有选项（无论是否写死）
     modelSelect.innerHTML = '';
+    
     // 按类型分组添加
     const groups = [
         { label: '文生图', keys: ['z-image', 'flux-dev', 'flux-schnell', 'flux-2-dev'] },
@@ -96,11 +98,10 @@ function initModelSelect() {
         });
         modelSelect.appendChild(optgroup);
     });
-    // 默认选中 z-image
+    
+    // 触发切换事件，更新参数
     modelSelect.value = 'z-image';
-    // 切换模型时更新参数显示
-    modelSelect.addEventListener('change', onModelChange);
-    onModelChange();
+    modelSelect.dispatchEvent(new Event('change'));
 }
 
 // ========== 模型切换回调 ==========
@@ -119,7 +120,6 @@ function onModelChange() {
     // 显示/隐藏相关参数（视频和图像编辑需要特殊UI）
     const isVideo = model.type === 'video-generation';
     const isEdit = model.type === 'image-editing';
-    // 可以根据模型类型显示/隐藏对应的UI元素
     const widthGroup = document.getElementById('widthGroup');
     const heightGroup = document.getElementById('heightGroup');
     if (widthGroup) widthGroup.style.display = (isVideo || isEdit) ? 'none' : 'flex';
