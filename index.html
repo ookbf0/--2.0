@@ -5,82 +5,228 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image View - 多模型工具</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        /* 为了更接近原版风格，追加一些样式 */
+        .model-card {
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            border: 1px solid #e5e7eb;
+        }
+        .model-card h3 {
+            margin-top: 0;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+        .model-card .desc {
+            color: #4b5563;
+            font-size: 0.95em;
+            margin-bottom: 12px;
+        }
+        .model-card .params-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .model-card .params-grid label {
+            display: flex;
+            flex-direction: column;
+            font-size: 0.85em;
+            color: #374151;
+        }
+        .model-card .params-grid input,
+        .model-card .params-grid select {
+            margin-top: 4px;
+            padding: 6px 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.95em;
+        }
+        .model-card .action-btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95em;
+        }
+        .model-card .action-btn:hover {
+            background: #1d4ed8;
+        }
+        .note-box {
+            background: #f3f4f6;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            color: #374151;
+            margin-top: 12px;
+            border-left: 4px solid #6b7280;
+        }
+        .note-box strong {
+            color: #1f2937;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🖼️ Image View 多模型工具</h1>
-        <p style="color: #6b7280; margin-bottom: 20px;">纯 HTML + JS 网页版 · 支持文生图 / 图像编辑 / 图生视频</p>
-
-        <!-- API Key -->
-        <div class="input-group">
-            <label>🔑 API Key</label>
-            <input type="password" id="apiKey" placeholder="输入你的 API Key">
+    <div class="container" style="max-width: 900px; margin: 0 auto; padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h1>🖼️ Image View</h1>
+            <a href="https://github.com/ookbf0/gitee" target="_blank" style="color: #2563eb; text-decoration: none;">GitHub</a>
         </div>
+        <p style="color: #16a34a; font-weight: 500;">准备就绪 / Ready</p>
+        <p style="color: #6b7280; margin-bottom: 24px;">
+            API 注册地址: <a href="https://ai.gitee.com/serverless-api" target="_blank" style="color: #2563eb;">https://ai.gitee.com/serverless-api</a>
+        </p>
 
-        <!-- 模型选择 -->
-        <div class="input-group">
-            <label>🤖 选择模型</label>
-            <select id="modelSelect">
-                <option value="z-image">Z-Image-Turbo (文生图)</option>
-                <option value="flux-dev">FLUX.1-dev (文生图)</option>
-                <option value="flux-schnell">FLUX.1-schnell (文生图)</option>
-                <option value="flux-2-dev">FLUX.2-dev (文生图)</option>
-                <option value="edit-2511">Edit-2511 (图像编辑)</option>
-                <option value="wan-video">Wan2.2 (图生视频)</option>
-            </select>
-        </div>
-
-        <!-- 提示词 -->
-        <div class="input-group" id="promptGroup">
-            <label>📝 提示词 <span style="font-weight:400;color:#9ca3af;font-size:12px;">(Ctrl+Enter 生成)</span></label>
-            <textarea id="prompt" rows="3" placeholder="描述你想要的画面..."></textarea>
-        </div>
-
-        <!-- 参数行 -->
-        <div class="params-row" id="paramsRow">
-            <div class="param-group" id="widthGroup">
-                <label>宽度</label>
-                <input type="number" id="width" value="1024" step="64" min="64" max="2048">
-            </div>
-            <div class="param-group" id="heightGroup">
-                <label>高度</label>
-                <input type="number" id="height" value="1024" step="64" min="64" max="2048">
-            </div>
-            <div class="param-group">
-                <label>步数</label>
-                <input type="number" id="steps" value="9" step="1" min="1" max="100">
-            </div>
-            <div class="param-group">
-                <label>引导比例</label>
-                <input type="number" id="guidance" value="7.0" step="0.1" min="0" max="20">
+        <!-- 1. API Key -->
+        <div style="margin-bottom: 24px;">
+            <h2 style="font-size: 1.2em; margin-bottom: 8px;">1. 输入 API Key / Enter API Key</h2>
+            <input type="password" id="apiKey" placeholder="请输入你的 API Key" style="width: 100%; padding: 10px 14px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 1em;">
+            <div class="note-box" style="margin-top: 8px;">
+                💡 提示：本工具默认通过同站点的 <code>/api/*</code> 代理转发到 <code>https://ai.gitee.com/v1</code>，避免浏览器 CORS 限制。
             </div>
         </div>
 
-        <!-- 生成按钮 -->
-        <button id="generateBtn">🚀 生成图片/视频</button>
+        <!-- 2. 选择模型 -->
+        <h2 style="font-size: 1.2em; margin-bottom: 16px;">2. 选择模型 / Select Model</h2>
 
-        <!-- 状态栏 -->
-        <div class="info-row">
-            <span id="statusMsg">就绪</span>
-            <span id="timeCost">⏱️ 上次耗时: --</span>
+        <!-- 模型：Z-Image-Turbo（文生图） -->
+        <div class="model-card" data-model="z-image">
+            <h3>Z-Image-Turbo（文生图 / Text-to-Image）</h3>
+            <div class="desc">快速文生图模型，Turbo 蒸馏版。</div>
+            <div class="params-grid">
+                <label>宽度 <input type="number" class="width" value="1024" step="64"></label>
+                <label>高度 <input type="number" class="height" value="1024" step="64"></label>
+                <label>步数 <input type="number" class="steps" value="9" step="1"></label>
+                <label>引导比例 <input type="number" class="guidance" value="0.0" step="0.1"></label>
+            </div>
+            <button class="action-btn" data-model="z-image">🚀 生成</button>
+            <div class="note-box">
+                <strong>建议：</strong> 2048 更清晰但更慢更贵；n>1 会输出多张。<br>
+                <strong>Tip:</strong> 2048 is sharper but slower/more expensive; n>1 outputs multiple images.
+            </div>
         </div>
 
-        <!-- 进度条 -->
-        <div class="progress-container" id="progressContainer" style="display:none;">
-            <div class="progress-bar" id="progressBar"></div>
-            <span class="progress-text" id="progressText">0%</span>
+        <!-- 模型：FLUX.1-dev（文生图） -->
+        <div class="model-card" data-model="flux-dev">
+            <h3>FLUX.1-dev（文生图 / Text-to-Image）</h3>
+            <div class="desc">高画质开源模型，非商业用途。</div>
+            <div class="params-grid">
+                <label>宽度 <input type="number" class="width" value="1024" step="64"></label>
+                <label>高度 <input type="number" class="height" value="1024" step="64"></label>
+                <label>步数 <input type="number" class="steps" value="50" step="1"></label>
+                <label>引导比例 <input type="number" class="guidance" value="7.0" step="0.1"></label>
+            </div>
+            <button class="action-btn" data-model="flux-dev">🚀 生成</button>
+            <div class="note-box">
+                <strong>建议：</strong> 推荐 1024x1024 及以上分辨率，步数 20-50 步可获得较好效果。<br>
+                <strong>Tip:</strong> Recommended resolution 1024x1024 or higher, 20-50 steps for better quality.
+            </div>
         </div>
 
-        <!-- 输出区域 -->
-        <div id="outputArea" style="margin-top: 16px; display:none;"></div>
+        <!-- 模型：FLUX.1-schnell（文生图） -->
+        <div class="model-card" data-model="flux-schnell">
+            <h3>FLUX.1-schnell（文生图 / Text-to-Image）</h3>
+            <div class="desc">极速生成，1-4 步出图，适合快速迭代。</div>
+            <div class="params-grid">
+                <label>宽度 <input type="number" class="width" value="1024" step="64"></label>
+                <label>高度 <input type="number" class="height" value="1024" step="64"></label>
+                <label>步数 <input type="number" class="steps" value="4" step="1"></label>
+                <label>引导比例 <input type="number" class="guidance" value="0.0" step="0.1"></label>
+            </div>
+            <button class="action-btn" data-model="flux-schnell">🚀 生成</button>
+            <div class="note-box">
+                <strong>建议：</strong> 1-4 步即可，步数增加会降低速度但提升细节。<br>
+                <strong>Tip:</strong> 1-4 steps are enough; more steps slow down but add detail.
+            </div>
+        </div>
+
+        <!-- 模型：FLUX.2-dev（文生图） -->
+        <div class="model-card" data-model="flux-2-dev">
+            <h3>FLUX.2-dev（文生图 / Text-to-Image）</h3>
+            <div class="desc">最新一代模型，画面一致性和细节更强。</div>
+            <div class="params-grid">
+                <label>宽度 <input type="number" class="width" value="1024" step="64"></label>
+                <label>高度 <input type="number" class="height" value="1024" step="64"></label>
+                <label>步数 <input type="number" class="steps" value="28" step="1"></label>
+                <label>引导比例 <input type="number" class="guidance" value="7.0" step="0.1"></label>
+            </div>
+            <button class="action-btn" data-model="flux-2-dev">🚀 生成</button>
+            <div class="note-box">
+                <strong>建议：</strong> 推荐 28-50 步，适合高分辨率精细生成。<br>
+                <strong>Tip:</strong> Recommended 28-50 steps, suitable for high-resolution detailed generation.
+            </div>
+        </div>
+
+        <!-- 模型：Edit-2511（图像编辑） -->
+        <div class="model-card" data-model="edit-2511">
+            <h3>Edit-2511（图像编辑 / Image Edit）</h3>
+            <div class="desc">基于两张图 + prompt 进行编辑。</div>
+            <div class="params-grid">
+                <label>步数 <input type="number" class="steps" value="30" step="1"></label>
+                <label>引导比例 <input type="number" class="guidance" value="7.5" step="0.1"></label>
+            </div>
+            <button class="action-btn" data-model="edit-2511">🚀 编辑</button>
+            <div class="note-box">
+                <strong>Notes:</strong> Higher steps = slower but more detail; higher guidance = follows prompt more strongly.
+            </div>
+        </div>
+
+        <!-- 模型：Wan2.2（图生视频） -->
+        <div class="model-card" data-model="wan-video">
+            <h3>Wan2.2-I2V-A14B（图生视频 / Image-to-Video）</h3>
+            <div class="desc">按 Duration 分段生成视频。</div>
+            <div class="params-grid">
+                <label>时长（秒） <input type="number" class="duration" value="5" step="1"></label>
+                <label>步数 <input type="number" class="steps" value="20" step="1"></label>
+            </div>
+            <button class="action-btn" data-model="wan-video">🚀 生成视频</button>
+            <div class="note-box">
+                <strong>说明：</strong> 若服务端单次只能生成固定 5 秒，本工具会按你指定的 Duration 分段生成并下载。<br>
+                <strong>注意：</strong> 浏览器端无法像桌面版那样用 ffmpeg 合并/裁剪成“一个最终 mp4”；因此多段会分别提供可播放与下载（也可勾选 zip 打包下载）。<br>
+                <strong>EN:</strong> If backend returns fixed-length clips, we generate segments and provide playable/downloadable mp4s (optionally zip).
+            </div>
+        </div>
+
+        <!-- 结果输出区域 -->
+        <div id="outputArea" style="margin-top: 30px; display: none;"></div>
+        <div id="statusMsg" style="margin-top: 12px; color: #374151;"></div>
+
     </div>
 
-    <!-- 图片预览模态框 -->
-    <div class="modal" id="imageModal">
-        <span class="modal-close" id="modalClose">&times;</span>
-        <img class="modal-content" id="modalImage" src="">
-    </div>
-
+    <!-- 引入 app.js -->
     <script src="app.js"></script>
+    <script>
+        // 重新绑定事件，使每个模型的“生成”按钮都能工作
+        document.addEventListener('DOMContentLoaded', function() {
+            const buttons = document.querySelectorAll('.action-btn');
+            buttons.forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    const card = this.closest('.model-card');
+                    const modelKey = this.dataset.model;
+                    // 从卡片中读取参数
+                    const width = parseInt(card.querySelector('.width')?.value) || 1024;
+                    const height = parseInt(card.querySelector('.height')?.value) || 1024;
+                    const steps = parseInt(card.querySelector('.steps')?.value) || 20;
+                    const guidance = parseFloat(card.querySelector('.guidance')?.value) || 7.0;
+                    // 设置到全局输入框（app.js 会读取这些）
+                    document.getElementById('modelSelect').value = modelKey;
+                    document.getElementById('width').value = width;
+                    document.getElementById('height').value = height;
+                    document.getElementById('steps').value = steps;
+                    document.getElementById('guidance').value = guidance;
+                    // 触发生成
+                    if (typeof generateImage === 'function') {
+                        generateImage();
+                    } else {
+                        alert('生成函数尚未加载，请检查 app.js');
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>
